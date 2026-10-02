@@ -1,0 +1,2 @@
+-- Create fact_songplays, fact_page_events and dimension tables
+-- Status: TODO (Step 4)

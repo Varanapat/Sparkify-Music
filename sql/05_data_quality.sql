@@ -1,0 +1,2 @@
+-- Data quality checks (row counts, NULLs, duplicate keys, song match rate)
+-- Status: TODO (Step 6.6)

@@ -1,0 +1,2 @@
+-- COPY raw JSON from our S3 bucket into staging tables
+-- Status: TODO (Step 6.5)

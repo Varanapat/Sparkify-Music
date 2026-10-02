@@ -1,0 +1,2 @@
+-- Drop all staging and star-schema tables
+-- Status: TODO (Step 4)

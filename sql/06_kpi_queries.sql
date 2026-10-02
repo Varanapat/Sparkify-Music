@@ -1,0 +1,2 @@
+-- KPI queries for business questions 1, 2, 3, 4, 6
+-- Status: TODO (Step 6.7)

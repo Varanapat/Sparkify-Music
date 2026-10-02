@@ -1,0 +1,2 @@
+-- INSERT ... SELECT from staging into the star schema
+-- Status: TODO (Step 6.5)

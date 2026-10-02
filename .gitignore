@@ -1,0 +1,18 @@
+# Secrets — never commit
+dwh.cfg
+config/dwh.cfg
+.env
+*.pem
+*.key
+
+# Raw dataset (re-download with scripts/download_dataset.py)
+data/raw/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.ipynb_checkpoints/
+
+# OS
+.DS_Store

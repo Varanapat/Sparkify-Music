@@ -1,0 +1,74 @@
+erDiagram
+    dim_users ||--o{ fact_songplays : "user_key"
+    dim_time ||--o{ fact_songplays : "start_time"
+    dim_songs |o--o{ fact_songplays : "song_id (nullable)"
+    dim_artists |o--o{ fact_songplays : "artist_id (nullable)"
+    dim_users ||--o{ fact_page_events : "user_key"
+    dim_time ||--o{ fact_page_events : "start_time"
+    dim_artists ||--o{ dim_songs : "artist_id"
+
+    fact_songplays {
+        BIGINT songplay_id PK
+        TIMESTAMP start_time FK
+        INTEGER user_key FK
+        VARCHAR user_id
+        VARCHAR level
+        VARCHAR song_id FK "NULL if not matched"
+        VARCHAR artist_id FK "NULL if not matched"
+        INTEGER session_id
+        VARCHAR song_title "raw text from event"
+        VARCHAR artist_name "raw text from event"
+        FLOAT song_length
+        VARCHAR location
+        VARCHAR user_agent
+    }
+    fact_page_events {
+        BIGINT event_id PK
+        TIMESTAMP start_time FK
+        INTEGER user_key FK
+        VARCHAR user_id
+        VARCHAR level
+        INTEGER session_id
+        INTEGER item_in_session
+        VARCHAR page
+        VARCHAR http_method
+        INTEGER http_status
+        VARCHAR location
+        VARCHAR user_agent
+    }
+    dim_users {
+        INTEGER user_key PK "surrogate key"
+        VARCHAR user_id "natural key"
+        VARCHAR first_name
+        VARCHAR last_name
+        VARCHAR gender
+        VARCHAR level
+        TIMESTAMP valid_from
+        TIMESTAMP valid_to
+        BOOLEAN is_current
+    }
+    dim_songs {
+        VARCHAR song_id PK
+        VARCHAR title
+        VARCHAR artist_id FK
+        INTEGER year "NULL if unknown"
+        FLOAT duration
+    }
+    dim_artists {
+        VARCHAR artist_id PK
+        VARCHAR name
+        VARCHAR location
+        FLOAT latitude
+        FLOAT longitude
+    }
+    dim_time {
+        TIMESTAMP start_time PK
+        SMALLINT hour
+        SMALLINT day
+        SMALLINT week
+        SMALLINT month
+        SMALLINT year
+        SMALLINT weekday
+        VARCHAR weekday_name
+        BOOLEAN is_weekend
+    }

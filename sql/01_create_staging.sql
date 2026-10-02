@@ -1,0 +1,2 @@
+-- Create staging_events and staging_songs
+-- Status: TODO (Step 4)
