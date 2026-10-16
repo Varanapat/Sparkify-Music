@@ -41,7 +41,7 @@
 | Credentials เป็นแบบชั่วคราว (session ~4 ชม.) | ไม่เก็บ key ในไฟล์ · อัปโหลดข้อมูลผ่าน CloudShell · EC2 ได้สิทธิ์จาก `LabInstanceProfile` | ✅ |
 | QuickSight ไม่อยู่ในรายการ | ใช้ Metabase อยู่แล้ว | ✅ ไม่ต้องแก้ |
 | SNS, CloudWatch, Systems Manager, Secrets Manager, VPC **ใช้ได้** | แผน monitoring และ Session Manager ใช้ได้ตามเดิม | ✅ |
-| แต่ละคนมี Lab ของตัวเอง | ต้อง build ใน Lab ของ **คนเดียว** คนอื่นดู Metabase ผ่าน IP | ⏳ ต้องเลือกว่า Lab ของใคร |
+| แต่ละคนมี Lab ของตัวเอง | build ใน Lab ของ **คนเดียว** คนอื่นดู Metabase ผ่าน IP | ✅ ใช้ Lab ของเพื่อนในกลุ่ม (เพื่อนเป็นคนทำ Step 6 ต่อ) |
 
 **ไฟล์ที่แก้:** `docs/architecture.md` (เพิ่ม §0 Learner Lab constraints, แก้ §3 IAM, §4 config, §7 ideal) ·
 `docs/architecture.drawio` + `docs/figures/architecture_as_built.png` (label `LabRole`, `ra3.large`) · `README.md` · `config/dwh.cfg.example`
@@ -59,7 +59,7 @@
 | 4 | Data Model | ✅ เสร็จ (ออกแบบ) | `docs/data_model.md`, ERD (draw.io + Mermaid) |
 | 5 | AWS Architecture Diagram | ✅ เสร็จ | `docs/architecture.md`, diagram 3 หน้า |
 | 6 | Build บน AWS + เขียน SQL/ETL | ⏳ ยังไม่เริ่ม | — |
-| 7 | 4 Pillars | ⏳ ยังไม่เริ่ม (มีร่างใน `architecture.md` §7) | — |
+| 7 | 4 Pillars | ✅ เสร็จ (17 ต.ค.) | `docs/well_architected.md`, README §9 |
 | 8 | Cost Estimate | ⏳ ยังไม่เริ่ม | — |
 | 9 | รูปเล่มรายงาน | ⏳ ยังไม่เริ่ม | — |
 | 10 | Cleanup | ⏳ หลังส่งงาน | — |
@@ -348,7 +348,7 @@ Fact หา `user_key` ด้วยเงื่อนไข `start_time >= valid
 
 - ⚠️ **ยังไม่มีอะไรบน AWS** ทุกอย่างเป็นการออกแบบ ตอน build จริงต้อง **แคป screenshot ทุก service ทันที** ลง `screenshots/`
 - ⚠️ **Budget $50**: Redshift คิดเงินทุกชั่วโมงที่เปิด และ **Lab ไม่ stop ให้** ต้อง **Pause** เองทุกครั้งที่เลิกทำงาน และลบทุกอย่างหลังส่งงาน (Step 10)
-- ⚠️ ต้องเลือกว่าจะ build ใน Learner Lab ของสมาชิกคนไหน (แต่ละคนมี Lab และ budget แยกกัน)
+- ℹ️ Build ใน Learner Lab ของเพื่อนในกลุ่ม คนที่ build ต้องอ่าน `docs/architecture.md` §0 (ข้อจำกัด Lab) ก่อนเริ่ม
 - ⚠️ ตาราง Team Roles ใน `README.md` หลัก ยังเป็น _TBD_ รอใส่ชื่อสมาชิก
 - ⚠️ Diagram draw.io สร้างจากสคริปต์ ไอคอนไม่ได้ผูกกับกล่อง group ถ้าจะย้ายให้เลือกทั้งชุดก่อน
 - ⚠️ Metabase เปิดผ่าน HTTP (ไม่เข้ารหัส) ต้องเขียนเป็นข้อจำกัดในบท 5

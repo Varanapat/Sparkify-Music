@@ -81,7 +81,16 @@ Full design, data dictionary and rationale: [`docs/data_model.md`](docs/data_mod
 
 ## 8. KPI Results & Dashboard — _TODO (Step 6.7)_
 
-## 9. Well-Architected Pillars — _TODO (Step 7)_
+## 9. Well-Architected Pillars
+
+Full review with proof checklist and failure scenarios: [`docs/well_architected.md`](docs/well_architected.md)
+
+| Pillar | As-built (Learner Lab) | Ideal (production) |
+|---|---|---|
+| **Security** | Redshift in private subnets, not public · SG chain (EC2 → Redshift 5439 only) · Metabase for team IPs only · no SSH (Session Manager) · S3 Block Public Access + SSE-S3 · Redshift encrypted · IAM role instead of keys · secrets gitignored | Least-privilege roles, Secrets Manager rotation, KMS CMK, HTTPS + WAF, CloudTrail, GuardDuty |
+| **Availability** | 2 AZs, Redshift subnet group in 2 AZs, S3 multi-AZ, Metabase auto-restart, health alarm | Redshift Multi-AZ, Metabase on ECS Fargate behind ALB |
+| **Resiliency** | Raw data in S3 (Versioning) → DW rebuildable · automated snapshots · idempotent ETL · data-quality gate · CloudWatch → SNS email | Cross-region snapshot copy, S3 CRR, Step Functions retries |
+| **Cost** | 1 × `ra3.large`, pause when idle, `t3.small`, no NAT, free S3 endpoint, Metabase, one region, delete after demo | Reserved nodes / Serverless, S3 lifecycle → Glacier, AWS Budgets |
 
 ## 10. Cost Estimate — _TODO (Step 8)_
 
