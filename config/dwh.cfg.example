@@ -11,7 +11,7 @@ DB_PASSWORD = <db-password>
 DB_PORT  = 5439
 
 [IAM_ROLE]
-ARN = arn:aws:iam::<account-id>:role/<redshift-s3-read-role>
+ARN = arn:aws:iam::<account-id>:role/LabRole
 
 [S3]
 LOG_DATA      = s3://sparkify-raw-<group>/log_data

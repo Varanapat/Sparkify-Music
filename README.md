@@ -2,8 +2,9 @@
 
 > Cloud Technology Infrastructure — Data Engineering group project (5 members)
 >
-> Status: **work in progress** — sections marked _TODO_ are filled in step by step following `GUIDELINE_README.md`.
-> The original Sparkify reference is kept unchanged in `README.md`.
+> Status: **work in progress** — sections marked _TODO_ are filled in step by step following [`guidance/GUIDELINE_README.md`](guidance/GUIDELINE_README.md).
+> The original Sparkify reference is kept unchanged in [`guidance/README.md`](guidance/README.md).
+> Environment: **AWS Academy Learner Lab** (us-east-1, budget $50).
 
 ## 1. Project Overview
 
@@ -50,14 +51,15 @@ Diagrams: [`docs/architecture.drawio`](docs/architecture.drawio). Pages: as-buil
 
 | Layer | Choice |
 |---|---|
+| Environment | **AWS Academy Learner Lab** — constraints in [`docs/architecture.md` §0](docs/architecture.md) |
 | Region | `us-east-1` |
 | Network | VPC `10.0.0.0/16`, 2 AZs, 2 public + 2 private subnets, Internet Gateway, S3 gateway endpoint, **no NAT** |
 | Raw storage | S3 `sparkify-raw-<group>` (Block Public Access, SSE-S3, Versioning) |
-| Data warehouse | Redshift provisioned, 1 node, **private subnets**, not publicly accessible, Enhanced VPC Routing |
+| Data warehouse | Redshift provisioned, 1 × `ra3.large`, **private subnets**, not publicly accessible, Enhanced VPC Routing |
 | ETL + dashboard | EC2 `t3.small` in a public subnet: Python ETL + Metabase (Docker) |
 | Access | **Session Manager** (no SSH key, port 22 closed) |
 | Security groups | `sg-app`: 3000 from team IPs only · `sg-redshift`: 5439 from `sg-app` only |
-| IAM | `RedshiftS3ReadRole` (read our bucket only), `EC2SSMRole` |
+| IAM | Pre-created `LabRole` (Redshift → S3) and `LabInstanceProfile` (EC2 → SSM). Learner Lab cannot create custom roles |
 | Monitoring | CloudWatch alarms (CPU, disk, health) → SNS email |
 
 ## 5. Data Model
@@ -88,9 +90,8 @@ Full design, data dictionary and rationale: [`docs/data_model.md`](docs/data_mod
 ## 12. Repository Structure
 
 ```text
-├── PROJECT_README.md        # this file (main project doc)
-├── README.md                # original Sparkify reference (unchanged)
-├── GUIDELINE_README.md      # step-by-step working guide
+├── README.md                # this file (main project doc)
+├── guidance/                # original Sparkify README, step-by-step guide, progress checkpoint
 ├── config/dwh.cfg.example   # config template (copy to config/dwh.cfg, never commit)
 ├── data/raw/                # downloaded dataset (gitignored)
 ├── docs/                    # diagrams, ERD, cost estimate, figures/

@@ -1,12 +1,13 @@
 # CHECKPOINT — Sparkify Data Warehouse on AWS
 
-> **วันที่:** 2 ต.ค. 2026 · **สถานะ:** ทำเสร็จ Step 0–5 ตาม [`GUIDELINE_README.md`](GUIDELINE_README.md) (ส่วนออกแบบทั้งหมด)
+> **วันที่:** 2 ต.ค. 2026 (อัปเดต 17 ต.ค. 2026: เปลี่ยนเป็น Learner Lab) · **สถานะ:** ทำเสร็จ Step 0–5 ตาม [`GUIDELINE_README.md`](GUIDELINE_README.md) (ส่วนออกแบบทั้งหมด)
 > **ยังไม่ได้สร้างอะไรบน AWS จริง** และยังไม่ได้แตะ GitHub ทุกอย่างอยู่ในเครื่องเท่านั้น
 
 ---
 
 ## สารบัญ
 
+0. [อัปเดต: เปลี่ยน scope เป็น AWS Academy Learner Lab](#0-อัปเดต-เปลี่ยน-scope-เป็น-aws-academy-learner-lab)
 1. [ภาพรวมความคืบหน้า](#1-ภาพรวมความคืบหน้า)
 2. [การตัดสินใจหลักของโปรเจกต์](#2-การตัดสินใจหลักของโปรเจกต์)
 3. [Step 0 — Review README และคู่มือ](#3-step-0--review-readme-และคู่มือ)
@@ -22,13 +23,38 @@
 
 ---
 
+## 0. อัปเดต: เปลี่ยน scope เป็น AWS Academy Learner Lab
+
+> 17 ต.ค. 2026 · อาจารย์ให้ใช้ **AWS Academy Learner Lab** แทน AWS account ปกติ · budget **$50** (ใช้ไป $0)
+> ข้อมูลจาก Learner Lab README หัวข้อ "Service usage and other restrictions"
+
+**สิ่งที่ไม่ต้องแก้:** dataset, profiling, Business Questions, data model, ERD, data flow, ideal architecture
+
+| ข้อจำกัดของ Lab | ผลต่อการออกแบบ | แก้แล้ว |
+|---|---|---|
+| **สร้าง IAM role เองไม่ได้** | Redshift ใช้ `LabRole` และ EC2 ใช้ `LabInstanceProfile` (Lab สร้างไว้ให้) ส่วน role แบบ least privilege ย้ายไปเป็น "production design" และเขียนเป็นข้อจำกัดในบท 5 | ✅ |
+| Redshift: **`ra3.large` เท่านั้น สูงสุด 2 node** | ใช้ `ra3.large` × 1 node · Multi-AZ ทำไม่ได้ จึงอยู่ใน ideal อย่างเดียว | ✅ |
+| Region: `us-east-1` / `us-west-2` เท่านั้น | ใช้ `us-east-1` อยู่แล้ว | ✅ ไม่ต้องแก้ |
+| EC2: nano–large, สูงสุด 9 เครื่อง | `t3.small` 1 เครื่อง ผ่าน | ✅ ไม่ต้องแก้ |
+| EC2 **ถูก stop ตอน session หมด** และ start เองตอนเปิด session ใหม่ **ได้ public IP ใหม่ทุกครั้ง** | รัน Metabase ด้วย `--restart unless-stopped` · URL ของ Metabase เปลี่ยนทุก session | ✅ |
+| ⚠️ **Redshift ไม่ถูก stop ให้** | ต้อง **Pause เองทุกครั้ง** ก่อนเลิกงาน ไม่งั้นกิน budget ต่อเรื่อย ๆ | ✅ เขียนเตือนไว้ |
+| Credentials เป็นแบบชั่วคราว (session ~4 ชม.) | ไม่เก็บ key ในไฟล์ · อัปโหลดข้อมูลผ่าน CloudShell · EC2 ได้สิทธิ์จาก `LabInstanceProfile` | ✅ |
+| QuickSight ไม่อยู่ในรายการ | ใช้ Metabase อยู่แล้ว | ✅ ไม่ต้องแก้ |
+| SNS, CloudWatch, Systems Manager, Secrets Manager, VPC **ใช้ได้** | แผน monitoring และ Session Manager ใช้ได้ตามเดิม | ✅ |
+| แต่ละคนมี Lab ของตัวเอง | ต้อง build ใน Lab ของ **คนเดียว** คนอื่นดู Metabase ผ่าน IP | ⏳ ต้องเลือกว่า Lab ของใคร |
+
+**ไฟล์ที่แก้:** `docs/architecture.md` (เพิ่ม §0 Learner Lab constraints, แก้ §3 IAM, §4 config, §7 ideal) ·
+`docs/architecture.drawio` + `docs/figures/architecture_as_built.png` (label `LabRole`, `ra3.large`) · `README.md` · `config/dwh.cfg.example`
+
+---
+
 ## 1. ภาพรวมความคืบหน้า
 
 | Step | งาน | สถานะ | Output หลัก |
 |---|---|---|---|
 | 0 | Review README + คู่มือ | ✅ เสร็จ | รายการจุดที่ต้องแก้ใน README เดิม |
 | 1 | เช็คเงื่อนไขงาน / AWS | ✅ เสร็จ | การตัดสินใจหลัก (ข้อ 2) |
-| 2 | โครงโฟลเดอร์ในเครื่อง | ✅ เสร็จ | โฟลเดอร์ `docs/ sql/ scripts/ config/ screenshots/`, `.gitignore`, `PROJECT_README.md` |
+| 2 | โครงโฟลเดอร์ในเครื่อง | ✅ เสร็จ | โฟลเดอร์ `docs/ sql/ scripts/ config/ screenshots/`, `.gitignore`, `README.md` หลัก |
 | 3 | โหลดข้อมูล + Profiling + Business Questions | ✅ เสร็จ | `data/raw/`, `notebooks/01_data_profiling.ipynb`, BQ 5 ข้อ |
 | 4 | Data Model | ✅ เสร็จ (ออกแบบ) | `docs/data_model.md`, ERD (draw.io + Mermaid) |
 | 5 | AWS Architecture Diagram | ✅ เสร็จ | `docs/architecture.md`, diagram 3 หน้า |
@@ -45,9 +71,9 @@
 | เรื่อง | ตัดสินใจ | เหตุผลสั้น ๆ |
 |---|---|---|
 | สิ่งที่ต้องส่ง | รูปเล่ม + diagram + GitHub link · deadline เดือนหน้า · 30 คะแนน · กลุ่ม 5 คน | จากอาจารย์ (ไม่มีเกณฑ์ละเอียด) |
-| AWS account | Account ปกติ (อาจารย์จ่าย) ไม่ใช่ Learner Lab | สร้าง IAM Role เองได้ แต่ **เสียเงินจริง** ต้องระวัง cost |
+| AWS account | ~~Account ปกติ~~ → **AWS Academy Learner Lab** (budget $50) | เปลี่ยนเมื่อ 17 ต.ค. ดูข้อ 0 |
 | Region | `us-east-1` | ถูกที่สุด, service ครบ |
-| Data Warehouse | Redshift **provisioned 1 node** | Pause ได้, อยู่ใน VPC ของเรา → วาด network ได้ชัด |
+| Data Warehouse | Redshift **provisioned `ra3.large` × 1 node** | Pause ได้, อยู่ใน VPC ของเรา → วาด network ได้ชัด |
 | Dashboard | **Metabase บน EC2** | ฟรี (QuickSight มีค่ารายเดือนต่อ user) |
 | เข้า EC2 | **Session Manager** (ไม่เปิด SSH port 22) | ปลอดภัยกว่า ได้คะแนน security |
 | Monitoring | **CloudWatch alarm + SNS email** | ได้คะแนนเพิ่ม |
@@ -71,7 +97,7 @@
 | `dim_songs SORTKEY(title)` | ไม่มี query ไหน filter ด้วย title | ✅ เปลี่ยนเป็น `song_id` |
 | `dim_users` เก็บ level ค่าเดียว | เสียประวัติการเปลี่ยน plan | ✅ ทำ SCD Type 2 |
 
-> README เดิม **ไม่ได้แก้** เก็บไว้เป็น reference ส่วนเอกสารหลักตัวใหม่คือ [`PROJECT_README.md`](PROJECT_README.md)
+> README เดิม **ไม่ได้แก้** เก็บไว้เป็น reference ส่วนเอกสารหลักตัวใหม่คือ [`README.md` (main)](../README.md)
 
 ---
 
@@ -79,7 +105,7 @@
 
 - ข้อมูลจากอาจารย์: ส่ง **รูปเล่ม, diagram, GitHub link**, deadline เดือนหน้า, 30 คะแนน, ไม่มีเกณฑ์ละเอียด
 - เพราะไม่มีเกณฑ์ เราจึงยึดสิ่งที่เล่มรุ่นพี่ได้คะแนน คือ diagram ระดับ network, screenshot ทุก service, cost estimate, ideal architecture และเพิ่มตาราง 4 pillars ที่รุ่นพี่ไม่มี
-- ใช้ AWS account ปกติ ข้อจำกัดของ Learner Lab ในคู่มือ (ห้ามสร้าง IAM role, ไม่มี QuickSight) **จึงไม่เกี่ยว** แต่ต้องคุมค่าใช้จ่ายเอง
+- ~~ใช้ AWS account ปกติ~~ → **อัปเดต 17 ต.ค.: ใช้ Learner Lab** ข้อจำกัดเรื่อง IAM role / QuickSight / budget กลับมามีผล ดูข้อ 0
 
 ---
 
@@ -89,10 +115,11 @@
 
 ```text
 Sparkify Music Streaming Analytics/
-├── CHECKPOINT.md            ← ไฟล์นี้
-├── PROJECT_README.md        ← README หลักตัวใหม่ (ภาษาอังกฤษ)
-├── README.md                ← Sparkify ต้นฉบับ (ไม่แก้)
-├── GUIDELINE_README.md      ← คู่มือทีละ step
+├── README.md                ← README หลักของโปรเจกต์ (ภาษาอังกฤษ)
+├── guidance/
+│   ├── CHECKPOINT.md        ← ไฟล์นี้
+│   ├── README.md            ← Sparkify ต้นฉบับ (ไม่แก้)
+│   └── GUIDELINE_README.md  ← คู่มือทีละ step
 ├── .gitignore               ← กัน secret + data/raw + .venv ไม่ให้ขึ้น GitHub
 ├── requirements.txt         ← pandas, matplotlib, jupyter
 ├── config/dwh.cfg.example   ← ตัวอย่าง config (ไม่มี password จริง)
@@ -112,7 +139,7 @@ Sparkify Music Streaming Analytics/
 
 ### 6.1 โหลด Dataset
 
-- โหลดจาก bucket สาธารณะ `udacity-dend` (us-west-2) ด้วย [`scripts/download_dataset.py`](scripts/download_dataset.py)
+- โหลดจาก bucket สาธารณะ `udacity-dend` (us-west-2) ด้วย [`scripts/download_dataset.py`](../scripts/download_dataset.py)
   ใช้แค่ Python standard library ไม่ต้องมี AWS key และมี retry ถ้า S3 ตัด connection
 - ผลลัพธ์: **14,927 ไฟล์** ใน `data/raw/`
 
@@ -127,7 +154,7 @@ Sparkify Music Streaming Analytics/
 
 ### 6.2 Data Profiling (Jupyter Notebook)
 
-ไฟล์: [`notebooks/01_data_profiling.ipynb`](notebooks/01_data_profiling.ipynb) **รันแล้ว ผลลัพธ์บันทึกในไฟล์** เปิดดูได้เลย
+ไฟล์: [`notebooks/01_data_profiling.ipynb`](../notebooks/01_data_profiling.ipynb) **รันแล้ว ผลลัพธ์บันทึกในไฟล์** เปิดดูได้เลย
 (ถ้าจะรันใหม่: สร้าง venv แล้ว `pip install -r requirements.txt`)
 
 **ภาพรวมข้อมูล**
@@ -142,7 +169,7 @@ Sparkify Music Streaming Analytics/
 
 **ประเภทหน้า (page) ที่ user เปิด**: `NextSong` คือการเล่นเพลง ส่วนหน้าอื่น ๆ (Upgrade / Downgrade) ใช้ตอบ BQ3–BQ4
 
-![Events by page type](docs/figures/profiling_page_counts.png)
+![Events by page type](../docs/figures/profiling_page_counts.png)
 
 ### 6.3 สิ่งที่ค้นพบ (Findings) และผลต่อการออกแบบ
 
@@ -169,11 +196,11 @@ Sparkify Music Streaming Analytics/
 
 **BQ1 — Traffic ตามชั่วโมงและวัน**
 
-![BQ1 plays by hour and weekday](docs/figures/profiling_bq1_hour_weekday.png)
+![BQ1 plays by hour and weekday](../docs/figures/profiling_bq1_hour_weekday.png)
 
 **BQ2–BQ5 — ภาพรวม**
 
-![BQ2 to BQ5 overview](docs/figures/profiling_bq2_to_bq5.png)
+![BQ2 to BQ5 overview](../docs/figures/profiling_bq2_to_bq5.png)
 
 > ⚠️ ข้อมูลเป็นตัวอย่าง (97 users, 1 เดือน) ในเล่มต้องเขียนว่าระบบ **ออกแบบให้ scale** ได้มากกว่านี้ ส่วนตัวเลขใช้แสดงว่า pipeline ทำงานได้จริง
 
@@ -181,13 +208,13 @@ Sparkify Music Streaming Analytics/
 
 ## 7. Step 4 — Data Model (Star Schema + SCD Type 2)
 
-เอกสารเต็ม: [`docs/data_model.md`](docs/data_model.md) (มี data dictionary ทุก column, กฎการแปลงข้อมูล, ตารางเทียบกับ README เดิม)
+เอกสารเต็ม: [`docs/data_model.md`](../docs/data_model.md) (มี data dictionary ทุก column, กฎการแปลงข้อมูล, ตารางเทียบกับ README เดิม)
 
 ### 7.1 ERD
 
-![ERD](docs/figures/erd.png)
+![ERD](../docs/figures/erd.png)
 
-ไฟล์ต้นฉบับ: [`docs/erd.drawio`](docs/erd.drawio) (draw.io แก้ได้) · [`docs/erd.mmd`](docs/erd.mmd) (Mermaid แสดงบน GitHub ได้เลย)
+ไฟล์ต้นฉบับ: [`docs/erd.drawio`](../docs/erd.drawio) (draw.io แก้ได้) · [`docs/erd.mmd`](../docs/erd.mmd) (Mermaid แสดงบน GitHub ได้เลย)
 
 ### 7.2 ตารางและการออกแบบบน Redshift
 
@@ -216,11 +243,11 @@ Fact หา `user_key` ด้วยเงื่อนไข `start_time >= valid
 
 ## 8. Step 5 — AWS Architecture
 
-เอกสารเต็ม: [`docs/architecture.md`](docs/architecture.md) · ไฟล์ diagram: [`docs/architecture.drawio`](docs/architecture.drawio) (3 หน้า)
+เอกสารเต็ม: [`docs/architecture.md`](../docs/architecture.md) · ไฟล์ diagram: [`docs/architecture.drawio`](../docs/architecture.drawio) (3 หน้า)
 
 ### 8.1 As-built architecture (สิ่งที่จะ build จริง)
 
-![As-built architecture](docs/figures/architecture_as_built.png)
+![As-built architecture](../docs/figures/architecture_as_built.png)
 
 **Network**
 
@@ -241,29 +268,29 @@ Fact หา `user_key` ด้วยเงื่อนไข `start_time >= valid
 | `sg-app` (EC2) | TCP 22 | **ไม่เปิด** | ใช้ Session Manager แทน |
 | `sg-redshift` | TCP 5439 | **`sg-app`** | Redshift รับเฉพาะจาก EC2 |
 
-**IAM (least privilege)**: `RedshiftS3ReadRole` อ่านได้แค่ bucket ของเรา · `EC2SSMRole` ใช้ Session Manager เท่านั้น
+**IAM**: Redshift ใช้ `LabRole` · EC2 ใช้ `LabInstanceProfile` (Lab สร้างไว้ให้ สร้างเองไม่ได้) · role แบบ least privilege อยู่ใน production design
 
-**Redshift**: 1 node · private subnet · Publicly accessible = No · Enhanced VPC Routing = On · encrypted · automated snapshot 1 วัน · pause เมื่อไม่ใช้
+**Redshift**: `ra3.large` × 1 node · private subnet · Publicly accessible = No · Enhanced VPC Routing = On · encrypted · automated snapshot 1 วัน · pause เมื่อไม่ใช้
 
 **Monitoring**: CloudWatch alarm 3 ตัว (CPU > 80%, Disk > 80%, Health) → SNS → email กลุ่ม
 
 ### 8.2 Data flow
 
-![Data flow](docs/figures/data_flow.png)
+![Data flow](../docs/figures/data_flow.png)
 
 ลำดับการรัน: `00_drop → 01_create_staging → 02_create_star_schema → 03_copy_from_s3 → 04_transform_load → 05_data_quality → 06_kpi_queries`
 ถ้า Data Quality ไม่ผ่าน pipeline จะหยุด · raw data อยู่ใน S3 เสมอ จึง rebuild warehouse ใหม่ได้ทุกเมื่อ
 
 ### 8.3 Ideal architecture (ไม่คำนึงค่าใช้จ่าย สำหรับบทที่ 5)
 
-![Ideal architecture](docs/figures/architecture_ideal.png)
+![Ideal architecture](../docs/figures/architecture_ideal.png)
 
 | ด้าน | ที่ทำจริง | Ideal |
 |---|---|---|
 | Ingestion | ไฟล์ JSON แบบ batch | Kinesis Data Firehose (near real-time) |
 | Data lake | bucket เดียว | S3 raw/processed/curated + Glue Catalog + Glacier |
 | Orchestration | รัน `etl.py` เอง | EventBridge → Step Functions |
-| Warehouse | Redshift 1 node | Redshift RA3 Multi-AZ multi-node + Spectrum |
+| Warehouse | Redshift `ra3.large` × 1 node | Redshift RA3 Multi-AZ multi-node + Spectrum |
 | Dashboard | Metabase บน EC2 ตัวเดียว (HTTP) | ECS Fargate 2 AZ หลัง ALB (HTTPS + WAF) |
 | Security | password ใน config ในเครื่อง | Secrets Manager, KMS CMK, CloudTrail, GuardDuty |
 | DR | snapshot 1 วัน | Cross-region snapshot + S3 CRR ไป us-west-2 |
@@ -289,18 +316,18 @@ Fact หา `user_key` ด้วยเงื่อนไข `start_time >= valid
 | ไฟล์ | Step | สถานะ |
 |---|---|---|
 | [`CHECKPOINT.md`](CHECKPOINT.md) | — | ไฟล์นี้ |
-| [`PROJECT_README.md`](PROJECT_README.md) | 2–5 | ส่วน 1–5 เสร็จ, 6–11 เป็น TODO |
-| [`.gitignore`](.gitignore) | 2 | เสร็จ |
-| [`requirements.txt`](requirements.txt) | 3 | เสร็จ |
-| [`config/dwh.cfg.example`](config/dwh.cfg.example) | 2 | เสร็จ (template) |
-| [`scripts/download_dataset.py`](scripts/download_dataset.py) | 3 | ใช้งานได้ |
+| [`README.md` (main)](../README.md) | 2–5 | ส่วน 1–5 เสร็จ, 6–11 เป็น TODO |
+| [`.gitignore`](../.gitignore) | 2 | เสร็จ |
+| [`requirements.txt`](../requirements.txt) | 3 | เสร็จ |
+| [`config/dwh.cfg.example`](../config/dwh.cfg.example) | 2 | เสร็จ (template) |
+| [`scripts/download_dataset.py`](../scripts/download_dataset.py) | 3 | ใช้งานได้ |
 | `scripts/create_tables.py`, `etl.py`, `upload_to_s3.sh` | 6 | ว่าง (TODO) |
 | `sql/00–06_*.sql` | 4/6 | มีแค่หัวข้อ (TODO) |
-| [`notebooks/01_data_profiling.ipynb`](notebooks/01_data_profiling.ipynb) | 3 | รันแล้ว มีผลลัพธ์ |
-| [`docs/data_model.md`](docs/data_model.md) | 4 | เสร็จ |
-| [`docs/erd.drawio`](docs/erd.drawio), [`docs/erd.mmd`](docs/erd.mmd) | 4 | เสร็จ |
-| [`docs/architecture.md`](docs/architecture.md) | 5 | เสร็จ |
-| [`docs/architecture.drawio`](docs/architecture.drawio) | 5 | เสร็จ (3 หน้า) |
+| [`notebooks/01_data_profiling.ipynb`](../notebooks/01_data_profiling.ipynb) | 3 | รันแล้ว มีผลลัพธ์ |
+| [`docs/data_model.md`](../docs/data_model.md) | 4 | เสร็จ |
+| [`docs/erd.drawio`](../docs/erd.drawio), [`docs/erd.mmd`](../docs/erd.mmd) | 4 | เสร็จ |
+| [`docs/architecture.md`](../docs/architecture.md) | 5 | เสร็จ |
+| [`docs/architecture.drawio`](../docs/architecture.drawio) | 5 | เสร็จ (3 หน้า) |
 | `docs/figures/*.png` | 3–5 | 7 รูป (ใช้ใส่เล่มได้เลย) |
 
 **รูปทั้งหมดใน `docs/figures/`**
@@ -320,9 +347,9 @@ Fact หา `user_key` ด้วยเงื่อนไข `start_time >= valid
 ## 11. สิ่งที่ยังไม่ได้ทำ / ข้อควรระวัง
 
 - ⚠️ **ยังไม่มีอะไรบน AWS** ทุกอย่างเป็นการออกแบบ ตอน build จริงต้อง **แคป screenshot ทุก service ทันที** ลง `screenshots/`
-- ⚠️ **ใช้เงินจริง**: Redshift คิดเงินทุกชั่วโมงที่เปิด ต้อง **Pause** ทุกครั้งที่เลิกทำงาน และลบทุกอย่างหลังส่งงาน (Step 10)
-- ⚠️ Node type ของ Redshift ยังไม่ได้ล็อก (ต้องดูใน console ว่าตัวเล็กสุดที่มีคืออะไร ตอน Step 6.3 / Step 8)
-- ⚠️ ตาราง Team Roles ใน `PROJECT_README.md` ยังเป็น _TBD_ รอใส่ชื่อสมาชิก
+- ⚠️ **Budget $50**: Redshift คิดเงินทุกชั่วโมงที่เปิด และ **Lab ไม่ stop ให้** ต้อง **Pause** เองทุกครั้งที่เลิกทำงาน และลบทุกอย่างหลังส่งงาน (Step 10)
+- ⚠️ ต้องเลือกว่าจะ build ใน Learner Lab ของสมาชิกคนไหน (แต่ละคนมี Lab และ budget แยกกัน)
+- ⚠️ ตาราง Team Roles ใน `README.md` หลัก ยังเป็น _TBD_ รอใส่ชื่อสมาชิก
 - ⚠️ Diagram draw.io สร้างจากสคริปต์ ไอคอนไม่ได้ผูกกับกล่อง group ถ้าจะย้ายให้เลือกทั้งชุดก่อน
 - ⚠️ Metabase เปิดผ่าน HTTP (ไม่เข้ารหัส) ต้องเขียนเป็นข้อจำกัดในบท 5
 - ℹ️ ก่อนขึ้น GitHub: เช็คว่า `data/raw/`, `.venv/`, `config/dwh.cfg` ไม่ถูก add (`.gitignore` กันไว้แล้ว)
