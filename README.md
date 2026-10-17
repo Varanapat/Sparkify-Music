@@ -92,7 +92,18 @@ Full review with proof checklist and failure scenarios: [`docs/well_architected.
 | **Resiliency** | Raw data in S3 (Versioning) → DW rebuildable · automated snapshots · idempotent ETL · data-quality gate · CloudWatch → SNS email | Cross-region snapshot copy, S3 CRR, Step Functions retries |
 | **Cost** | 1 × `ra3.large`, pause when idle, `t3.small`, no NAT, free S3 endpoint, Metabase, one region, delete after demo | Reserved nodes / Serverless, S3 lifecycle → Glacier, AWS Budgets |
 
-## 10. Cost Estimate — _TODO (Step 8)_
+## 10. Cost Estimate
+
+Details and the $50 Learner Lab budget plan: [`docs/cost_estimate.md`](docs/cost_estimate.md) · AWS Pricing Calculator exports in `docs/cost-estimate-scenario-*.pdf`
+
+| Scenario | Redshift hours | Monthly cost |
+|---|---|---|
+| A — Learner Lab project (pause when idle) | 40 | ≈ **$25** (calculator $23.93 + public IPv4/EBS) |
+| B — Same architecture 24/7 | 730 | **$416.34** ($4,996 / year) |
+
+`ra3.large` costs $0.543/hour, so Redshift is over 90% of the bill. **Pause it after every session.**
+
+Session checklists and final teardown order: [`docs/cleanup.md`](docs/cleanup.md)
 
 ## 11. How to Run — _TODO_
 

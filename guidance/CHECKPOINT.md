@@ -60,9 +60,9 @@
 | 5 | AWS Architecture Diagram | ✅ เสร็จ | `docs/architecture.md`, diagram 3 หน้า |
 | 6 | Build บน AWS + เขียน SQL/ETL | ⏳ ยังไม่เริ่ม | — |
 | 7 | 4 Pillars | ✅ เสร็จ (17 ต.ค.) | `docs/well_architected.md`, README §9 |
-| 8 | Cost Estimate | ⏳ ยังไม่เริ่ม | — |
+| 8 | Cost Estimate | ✅ เสร็จ (17 ต.ค.) | `docs/cost_estimate.md`, PDF จาก Pricing Calculator 2 ฉาก |
 | 9 | รูปเล่มรายงาน | ⏳ ยังไม่เริ่ม | — |
-| 10 | Cleanup | ⏳ หลังส่งงาน | — |
+| 10 | Cleanup | ✅ คู่มือเสร็จ (17 ต.ค.) · ลบจริงหลัง demo | `docs/cleanup.md` |
 
 ---
 
