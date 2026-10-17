@@ -61,7 +61,7 @@
 | 6 | Build บน AWS + เขียน SQL/ETL | ⏳ ยังไม่เริ่ม | — |
 | 7 | 4 Pillars | ✅ เสร็จ (17 ต.ค.) | `docs/well_architected.md`, README §9 |
 | 8 | Cost Estimate | ✅ เสร็จ (17 ต.ค.) | `docs/cost_estimate.md`, PDF จาก Pricing Calculator 2 ฉาก |
-| 9 | รูปเล่มรายงาน | ⏳ ยังไม่เริ่ม | — |
+| 9 | รูปเล่มรายงาน | 🟡 ร่างแรก (17 ต.ค.) บท 1–3, 5 เขียนแล้ว · บท 4 + ปก รอข้อมูล | `report/Sparkify_DWH_Report.docx` |
 | 10 | Cleanup | ✅ คู่มือเสร็จ (17 ต.ค.) · ลบจริงหลัง demo | `docs/cleanup.md` |
 
 ---

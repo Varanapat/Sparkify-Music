@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="300" viewBox="0 0 760 300" role="img" aria-label="Meme: DISTKEY song_id no, DISTSTYLE AUTO yes">
+<style>.t{font-family:Segoe UI,Helvetica,Arial,sans-serif}.big{font-size:64px}.code{font-family:Menlo,Consolas,monospace;font-size:26px;font-weight:700}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+@keyframes pop{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
+.no{animation:shake .6s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+.yes{animation:pop 1.2s ease-in-out infinite;transform-box:fill-box;transform-origin:center}</style>
+<rect width="760" height="300" rx="14" fill="#fff8e7" stroke="#e0c97a"/>
+<rect x="0" y="0" width="200" height="150" fill="#ffd9d9"/><rect x="0" y="150" width="200" height="150" fill="#d9ffe4"/>
+<line x1="0" y1="150" x2="760" y2="150" stroke="#e0c97a" stroke-width="2"/>
+<text class="t big no" x="100" y="100" text-anchor="middle">🙅</text>
+<text class="t big yes" x="100" y="250" text-anchor="middle">😎</text>
+<text class="t code" x="230" y="70" fill="#b00020">DISTKEY(song_id)</text>
+<text class="t" x="230" y="108" font-size="19" fill="#555">95% of song_id is NULL → every row lands on one slice</text>
+<text class="t code" x="230" y="220" fill="#0a7a32">DISTSTYLE AUTO</text>
+<text class="t" x="230" y="258" font-size="19" fill="#555">rows spread across slices, no skew, no drama</text>
+</svg>
