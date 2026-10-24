@@ -2,3 +2,7 @@
 pandas
 matplotlib
 jupyter
+
+# AWS (ETL on EC2 / Redshift)
+psycopg2-binary
+boto3
