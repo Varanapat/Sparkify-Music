@@ -82,7 +82,7 @@ editable diagrams: [`docs/architecture.drawio`](docs/architecture.drawio)
 | Data warehouse | Redshift provisioned, 1 × `ra3.large`, **private subnets**, not publicly accessible, Enhanced VPC Routing |
 | ETL + dashboard | EC2 `t3.small` in a public subnet: Python ETL + Metabase (Docker) |
 | Access | **Session Manager** (no SSH key, port 22 closed) |
-| Security groups | `sg-app`: 3000 from team IPs only · `sg-redshift`: 5439 from `sg-app` only |
+| Security groups | `sparkify-sg-app`: 3000 from team IPs only · `sparkify-sg-redshift`: 5439 from `sparkify-sg-app` only |
 | IAM | Pre-created `LabRole` (Redshift → S3) and `LabInstanceProfile` (EC2 → SSM). Learner Lab cannot create custom roles |
 | Monitoring | CloudWatch alarms (CPU, disk, health) → SNS email |
 
@@ -113,15 +113,45 @@ Why not the classic `DISTKEY(song_id)`? A picture is worth a thousand slices:
 
 ## 🔄 6. ETL Pipeline
 
-_TODO (Step 6)._ Planned run order:
+An **ELT** pipeline: raw JSON is loaded into Redshift as-is (staging), then transformed with SQL inside the warehouse.
 
 ```text
 00_drop → 01_create_staging → 02_create_star_schema → 03_copy_from_s3 → 04_transform_load → 05_data_quality → 06_kpi_queries
 ```
 
+| Step | File | What it does |
+|---|---|---|
+| 1 | `sql/00`–`02` | Drop and recreate staging and star-schema tables (`scripts/create_tables.py`) |
+| 2 | `sql/03_copy_from_s3.sql` | `COPY` raw JSON from our S3 bucket into `staging_events` (JSONPath file) and `staging_songs` (`'auto'`) |
+| 3 | `sql/04_transform_load.sql` | Transform into the star schema (below) |
+| 4 | `sql/05_data_quality.sql` | Run the checks in §7. `scripts/etl.py` exits with an error if any check fails |
+| 5 | `sql/06_kpi_queries.sql` | Answer BQ1–BQ5 and feed the dashboard (run by hand / Metabase) |
+
+Transform rules in `04_transform_load.sql` (details: [`docs/data_model.md` §5](docs/data_model.md)):
+
+- `ts` (epoch milliseconds) → `TIMESTAMP`; logged-out events (`userId = ''`) are excluded
+- `dim_artists`: one row per `artist_id`, shortest name wins · `dim_songs`: `year = 0` → `NULL`
+- `dim_users` **SCD Type 2**: a new version starts whenever a user's `level` changes
+- Facts look up `user_key` by the version valid at the event time
+- `fact_songplays` matches songs on title + artist + duration; `song_id` / `artist_id` stay `NULL` when not in the catalog
+
+`create_tables.py` and `etl.py` rebuild everything, so they can be run again safely. Each SQL file runs in one transaction (all or nothing).
+
 ## ✅ 7. Data Quality
 
-_TODO (Step 6.6)._ Expected values from profiling, to compare with Redshift:
+`sql/05_data_quality.sql` returns one row per check (`PASS` / `FAIL` / `INFO`). Expected values are computed from the staging tables, so no number is hard-coded. Redshift does not enforce primary or foreign keys, so these checks do that job.
+
+| Group | Checks |
+|---|---|
+| Staging | Both staging tables are not empty |
+| Row counts | `fact_songplays` = logged-in `NextSong` events · `fact_page_events` = logged-in events |
+| `dim_users` (SCD2) | Every logged-in user present · exactly one current version per user · no version with `valid_from >= valid_to` |
+| NULLs | No NULL `user_id` / `user_key` / `start_time` in either fact |
+| Duplicate keys | None in `dim_artists`, `dim_songs`, `dim_time`, `dim_users` |
+| Orphan keys | No fact row without its `dim_time` / `dim_users` row · no `song_id` / `artist_id` missing from dimensions |
+| Reported (`INFO`) | Song match rate · logged-out events excluded · `dim_users` versions |
+
+**Values expected from profiling** (matched exactly when the full pipeline was run on a local DuckDB copy of the raw data):
 
 | Check | Expected |
 |---|---|
@@ -131,7 +161,10 @@ _TODO (Step 6.6)._ Expected values from profiling, to compare with Redshift:
 | `dim_users` versions / current users | 106 / 97 |
 | `dim_artists` rows (no duplicate keys) | 9,553 |
 | NULL `user_id` / `start_time` in facts | 0 |
-| Song match rate | ≈ 4.7% |
+| Song match rate | ≈ 4.7% (319 / 6,820) |
+
+> The DuckDB run only tests the SQL logic. Results from the real Redshift cluster will be added after the AWS build.
+> Some artist names look garbled (e.g. `BjÃ¶rk`). They are already double-encoded in the source files, not a pipeline bug.
 
 ## 📊 8. KPI Results & Dashboard
 
@@ -169,7 +202,7 @@ AWS Pricing Calculator exports: [scenario A](docs/cost-estimate-scenario-a.pdf) 
 
 ## ▶️ 11. How to Run
 
-_TODO (after Step 6)._ Local profiling works today:
+**1. Local (laptop): get the data and profile it**
 
 ```bash
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
@@ -178,6 +211,31 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 ```bash
 .venv/bin/python scripts/download_dataset.py
 ```
+
+**2. AWS (Learner Lab):** build the infrastructure first ([`docs/architecture.md`](docs/architecture.md)), then:
+
+1. Copy `config/dwh.cfg.example` to `config/dwh.cfg` and fill in the Redshift endpoint, user, password, the `LabRole` ARN and the bucket name (the file is gitignored)
+2. Upload the raw data to S3 (in CloudShell, run `download_dataset.py` first because it has no local files):
+
+```bash
+scripts/upload_to_s3.sh sparkify-raw-<group>
+```
+
+3. On the EC2 instance (Session Manager), after `git clone` and `pip install psycopg2-binary boto3`:
+
+```bash
+python3 scripts/create_tables.py
+```
+
+```bash
+python3 scripts/etl.py
+```
+
+`etl.py` prints the data-quality result and exits with an error if a check fails. If `COPY` fails, it prints the latest rows of `sys_load_error_detail`.
+
+4. Run the queries in `sql/06_kpi_queries.sql` in Redshift Query Editor v2 or Metabase.
+
+> ⏸️ **Pause the Redshift cluster at the end of every session.** See [`docs/cleanup.md`](docs/cleanup.md).
 
 ## 📁 12. Repository Structure
 
@@ -192,8 +250,8 @@ python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 ├── notebooks/               # local data profiling (Jupyter)
 ├── report/                  # Word report (Thai) + generator source
 ├── requirements.txt         # Python packages for notebooks
-├── screenshots/             # evidence per AWS service
-├── scripts/                 # download / upload / create_tables / etl
+├── screenshots/             # evidence per AWS service (kept local, not committed: contains account IDs / e-mails)
+├── scripts/                 # download / upload / create_tables / etl (+ dwh_utils.py shared helpers)
 └── sql/                     # 00–06 SQL files
 ```
 

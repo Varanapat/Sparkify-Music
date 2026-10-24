@@ -16,7 +16,7 @@ Suggested names (use them everywhere so screenshots, scripts and this runbook ma
 |---|---|
 | S3 bucket | `sparkify-raw-<group>` |
 | VPC | `sparkify-vpc` |
-| Security groups | `sg-app`, `sg-redshift` |
+| Security groups | `sparkify-sg-app`, `sparkify-sg-redshift` |
 | Redshift subnet group | `sparkify-redshift-subnets` |
 | Redshift cluster | `sparkify-dwh` |
 | EC2 instance | `sparkify-app` |
@@ -28,7 +28,7 @@ Suggested names (use them everywhere so screenshots, scripts and this runbook ma
 - [ ] Start Lab → wait for the green dot → note **"Used $X of $50"** in the spend log ([`cost_estimate.md`](cost_estimate.md) §6)
 - [ ] EC2 starts automatically (Lab behaviour). If you do **not** need it today: EC2 → Instances → *Stop*
 - [ ] Need SQL today? Redshift → Clusters → `sparkify-dwh` → Actions → **Resume** (takes a few minutes)
-- [ ] Need Metabase? Use the **new public IP** of `sparkify-app`. Update `sg-app` port 3000 if your own IP changed
+- [ ] Need Metabase? Use the **new public IP** of `sparkify-app`. Update `sparkify-sg-app` port 3000 if your own IP changed
 
 ## 2. End of Every Session (do not skip)
 
@@ -76,7 +76,7 @@ The order follows dependencies. For example, a VPC cannot be deleted while a Red
 | 5 | Redshift | Configurations → Subnet groups → `sparkify-redshift-subnets` → *Delete* | Only after step 3 has finished |
 | 6 | EC2 | Instances → `sparkify-app` → *Terminate* | Root EBS volume is deleted with it (check step 7) |
 | 7 | EC2 | Volumes: none left · Elastic IPs: **release** any (an unattached EIP is charged) | |
-| 8 | VPC | Security groups → delete **`sg-redshift` first**, then `sg-app` | `sg-redshift` references `sg-app` |
+| 8 | VPC | Security groups → delete **`sparkify-sg-redshift` first**, then `sparkify-sg-app` | `sparkify-sg-redshift` references `sparkify-sg-app` |
 | 9 | VPC | Endpoints → S3 gateway endpoint → *Delete* | |
 | 10 | VPC | Your VPCs → `sparkify-vpc` → *Delete VPC* | Also deletes its subnets, route tables and internet gateway |
 | 11 | S3 | `sparkify-raw-<group>` → **Empty** (removes all object **versions**, because Versioning is on) → *Delete* | Raw data can be downloaded again with `scripts/download_dataset.py` |

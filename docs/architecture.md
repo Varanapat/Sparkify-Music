@@ -70,13 +70,15 @@ The private route table has **no** `0.0.0.0/0` route. Redshift cannot reach the 
 
 | SG | Direction | Protocol / Port | Source / Destination | Why |
 |---|---|---|---|---|
-| `sg-app` (EC2) | Inbound | TCP 3000 | Each team member's public IP `/32` | Metabase is open to the group only |
+| `sparkify-sg-app` (EC2) | Inbound | TCP 3000 | Each team member's public IP `/32` | Metabase is open to the group only |
 | | Inbound | TCP 22 | **not opened** | Session Manager replaces SSH |
 | | Outbound | All | `0.0.0.0/0` | pip / Docker image pulls, SSM agent (HTTPS 443), Redshift 5439 |
-| `sg-redshift` | Inbound | TCP 5439 | **`sg-app`** (SG reference, not an IP) | Only the EC2 instance can connect to the warehouse |
+| `sparkify-sg-redshift` | Inbound | TCP 5439 | **`sparkify-sg-app`** (SG reference, not an IP) | Only the EC2 instance can connect to the warehouse |
 | | Outbound | All | default | `COPY` from S3 through the endpoint |
 
-Referencing `sg-app` instead of an IP range means the rule still works if the EC2 private IP changes. It also blocks every other host in the VPC.
+> AWS does not allow a security group name to start with `sg-`, so the groups are named `sparkify-sg-app` and `sparkify-sg-redshift`.
+
+Referencing `sparkify-sg-app` instead of an IP range means the rule still works if the EC2 private IP changes. It also blocks every other host in the VPC.
 
 ## 3. Identity and Access (IAM)
 
@@ -139,7 +141,7 @@ Learner Lab does not allow creating roles. It is reported as a limitation in cha
 
 Access options:
 - **Shell:** `aws ssm start-session --target <instance-id>` or Console → EC2 → Connect → Session Manager
-- **Metabase (option, even safer):** SSM port forwarding (`AWS-StartPortForwardingSession`, port 3000). With this, `sg-app` needs **no inbound rules at all**. The trade-off is that every viewer needs the AWS CLI.
+- **Metabase (option, even safer):** SSM port forwarding (`AWS-StartPortForwardingSession`, port 3000). With this, `sparkify-sg-app` needs **no inbound rules at all**. The trade-off is that every viewer needs the AWS CLI.
 
 ## 5. Monitoring
 
@@ -155,9 +157,9 @@ Evidence for the report: an alarm in `ALARM` state (it can be forced with `aws c
 
 | # | From → To | Port / path | Controlled by |
 |---|---|---|---|
-| 1 | Team member → Internet Gateway → EC2 | TCP 3000 (Metabase) | `sg-app` inbound, IP `/32` only |
+| 1 | Team member → Internet Gateway → EC2 | TCP 3000 (Metabase) | `sparkify-sg-app` inbound, IP `/32` only |
 | 2 | Developer → Systems Manager → EC2 | HTTPS via SSM (no inbound port) | `LabInstanceProfile` |
-| 3 | EC2 → Redshift | TCP 5439 | `sg-redshift` inbound from `sg-app` |
+| 3 | EC2 → Redshift | TCP 5439 | `sparkify-sg-redshift` inbound from `sparkify-sg-app` |
 | 4 | Redshift → S3 endpoint → S3 | HTTPS inside AWS network | Enhanced VPC Routing + `rtb-private` + `LabRole` |
 | 5 | Redshift → CloudWatch → SNS → email | AWS-managed | Alarms in §5 |
 

@@ -104,6 +104,8 @@ Ways to lower Scenario B in a real company (chapter 5):
 
 | Date | Session work | Redshift hours | "Used" on Lab page |
 |---|---|---|---|
-| | | | |
-| | | | |
+| 2026-10-23 | สร้าง S3 + อัปโหลดข้อมูล, VPC, Security Groups, Redshift subnet group (ทุกอย่างฟรี) | 0 | $0 |
+| 2026-10-24 | สร้าง EC2 + Redshift `sparkify-dwh` (1 × `ra3.large`), ETL ผ่าน (COPY 666.7 วินาที, DQ ผ่านทุกข้อ), KPI ครบ, Metabase ต่อ Redshift ได้ | ≈ 1.3–1.5 _(ประมาณจากกราฟ CloudWatch CPUUtilization: ข้อมูลช่วง 20:17 ถึง ~21:36 UTC ของ 2026-10-23 (= ราว 03:17–04:36 เวลาไทย 2026-10-24) คิดเป็น ≈ $0.7–0.8 ที่ $0.543/ชม.)_ | $0.4 _(ตรวจตอนเริ่ม session ถัดไป ต่ำกว่าประมาณการ $0.7–0.8 อาจเพราะยอดบนหน้า Lab อัปเดตช้า หรือชั่วโมงจริงน้อยกว่าที่ประมาณ)_ |
+| 2026-10-24 (รอบเย็น) | สร้าง SNS `sparkify-alerts` + CloudWatch alarm 3 ตัว, ทดสอบบังคับ ALARM ได้อีเมลแจ้งเตือน (Redshift Paused ตลอดรอบ, EC2 เปิดอัตโนมัติ) | 0 | $0.8 _(เริ่มรอบที่ $0.4, เพิ่ม $0.4 ผมคาดว่าเป็นยอดของ Redshift รอบก่อนที่เพิ่งถูกนับ ซึ่งสอดคล้องกับประมาณการ $0.7–0.8 ไม่ได้ยืนยัน)_ |
+| 2026-10-25 | Resume Redshift, สร้าง Metabase ใหม่ + dashboard `Sparkify KPI` (KPI cards, BQ1–BQ5, Top 10 artists), alarm `health` ส่งอีเมลตอน Pause (Pause + Stop EC2 ก่อนจบ) | ≈ 2 _(ประมาณโดยผู้ทำจากเวลาทำงานรอบนี้ คิดเป็น ≈ $1.1 ที่ $0.543/ชม.)_ | $0.9 _(เริ่มรอบที่ $0.8 ตามที่บันทึกก่อนหน้า ยอดอาจอัปเดตช้า)_ |
 | **Total** | | | |

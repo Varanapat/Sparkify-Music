@@ -23,9 +23,9 @@ Security is designed in layers ("defense in depth"). Even if one layer fails, an
 |---|---|---|---|---|
 | Network | Private subnets for Redshift | Subnet group = Private A + Private B. `rtb-private` has **no** `0.0.0.0/0` route | The warehouse has no path to or from the internet | VPC → Route tables (`rtb-private`) |
 | Network | Redshift not public | *Publicly accessible* = **No** | No public endpoint exists at all | Redshift → Cluster → Network and security |
-| Network | Security-group chain | `sg-redshift` inbound 5439 **only from `sg-app`** (SG reference, not an IP) | Only the EC2 instance can connect, even inside the VPC | EC2 → Security Groups → `sg-redshift` inbound |
-| Network | Metabase restricted | `sg-app` inbound 3000 from each team member's IP `/32` only | The dashboard is not open to the internet | `sg-app` inbound rules |
-| Network | No SSH | No key pair, port 22 **closed**, access via **Session Manager** | Removes the most attacked port. Sessions are logged | `sg-app` (no port 22) + Session Manager terminal |
+| Network | Security-group chain | `sparkify-sg-redshift` inbound 5439 **only from `sparkify-sg-app`** (SG reference, not an IP) | Only the EC2 instance can connect, even inside the VPC | EC2 → Security Groups → `sparkify-sg-redshift` inbound |
+| Network | Metabase restricted | `sparkify-sg-app` inbound 3000 from each team member's IP `/32` only | The dashboard is not open to the internet | `sparkify-sg-app` inbound rules |
+| Network | No SSH | No key pair, port 22 **closed**, access via **Session Manager** | Removes the most attacked port. Sessions are logged | `sparkify-sg-app` (no port 22) + Session Manager terminal |
 | Network | Private path to S3 | **S3 gateway endpoint** + Redshift **Enhanced VPC Routing** | `COPY` traffic stays on the AWS network and follows our routes | VPC → Endpoints · Redshift → Network and security |
 | Identity | IAM role, not keys | Redshift uses `LabRole`, EC2 uses `LabInstanceProfile` | No access key is stored in code, config or on the server | Redshift → Associated IAM roles · EC2 → IAM role |
 | Data at rest | S3 encryption | Default encryption **SSE-S3** | Data on disk is encrypted | S3 → bucket → Properties |
@@ -36,7 +36,7 @@ Security is designed in layers ("defense in depth"). Even if one layer fails, an
 **Limitations (write in chapter 5):**
 - `LabRole` has wide permissions. In production we would use `RedshiftS3ReadRole` (read **only our bucket**) and `EC2SSMRole` (see [`architecture.md` §3.2](architecture.md)).
 - Metabase is served over **HTTP**, so traffic between the browser and EC2 is not encrypted. Production would put it behind an ALB with an HTTPS certificate (ACM) and AWS WAF.
-- Team IPs change (home / university Wi-Fi), so the `sg-app` rule has to be updated. Option: SSM port forwarding, which needs **no inbound rule at all**.
+- Team IPs change (home / university Wi-Fi), so the `sparkify-sg-app` rule has to be updated. Option: SSM port forwarding, which needs **no inbound rule at all**.
 
 ## 2. Availability
 
@@ -58,7 +58,7 @@ Security is designed in layers ("defense in depth"). Even if one layer fails, an
 | EC2 (1 instance) | ETL and Metabase stop | Budget and Lab limit. Raw data and DW are not affected | ECS Fargate in 2 AZs behind an **ALB** |
 | Learner Lab session end | EC2 is stopped, public IP changes | Lab behaviour, cannot change | Real account, Elastic IP / DNS name with Route 53 |
 
-**Demo-day checklist:** start the Lab about 30 minutes early → **resume** Redshift → wait for *Available* → check Metabase at the **new** EC2 IP → update `sg-app` if the presenter's IP changed.
+**Demo-day checklist:** start the Lab about 30 minutes early → **resume** Redshift → wait for *Available* → check Metabase at the **new** EC2 IP → update `sparkify-sg-app` if the presenter's IP changed.
 
 ## 3. Resiliency
 
