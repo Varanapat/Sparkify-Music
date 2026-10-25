@@ -168,7 +168,23 @@ Transform rules in `04_transform_load.sql` (details: [`docs/data_model.md` §5](
 
 ## 📊 8. KPI Results & Dashboard
 
-_TODO (Step 6.7)._ Metabase dashboard screenshots will go in `screenshots/dashboard/`.
+The KPI queries ([`sql/06_kpi_queries.sql`](sql/06_kpi_queries.sql)) ran on the Redshift cluster, and Metabase (Docker on the EC2 instance)
+shows them in one dashboard, **Sparkify KPI**: 4 KPI cards, 3 bar charts, 1 line chart, 1 funnel and 2 tables.
+The results match the numbers expected from profiling (§3).
+
+| Business question | Result | What it means |
+|---|---|---|
+| **KPIs** | 6,820 plays · 97 users · **22.7%** of users are paid · **82%** of plays come from paid users | A small group of paid users generates most of the listening |
+| **BQ1** traffic by hour and weekday | Peak at about 16:00–18:00 UTC, lowest at about 03:00. Wednesday is the busiest day (1,364 plays), Sunday the quietest (396) | Capacity should follow weekday afternoons |
+| **BQ2** songs per session | Free **2.1** vs paid **28.4** (587 vs 197 sessions) | Paid users are far more engaged, which shows the value of the subscription |
+| **BQ3** upgrade funnel | 15 users opened the Upgrade page, 8 submitted (**53.3%**) | The 7 who did not submit are a target for promotions (small sample) |
+| **BQ4** churn risk | 17 paid users opened the Downgrade page, only 1 submitted | The table lists them with their plays in the 7 days before the visit vs the 7 days before that. For most users activity did not drop. Visits in early November have a shorter comparison window |
+| **BQ5** paid ratio by state | California 17 users (24% paid), Texas 13 (15%) | Most states have only 2–4 users, so read the ratio together with the user count. Some entries are metro areas (e.g. `NY-NJ-PA`) |
+| Top artists | Coldplay (58 plays) and Kings Of Leon (55) | Counted from the raw artist name of each event |
+
+> Notes: the sample has one month of data (Nov 2018, 97 users), so results show that the pipeline works and are not general rules.
+> Some artist names look garbled (e.g. `BjÃ¶rk`) because they are already double-encoded in the source files.
+> Dashboard screenshots are kept out of Git because they show account details (see §12).
 
 ## 🏛️ 9. Well-Architected Pillars
 
